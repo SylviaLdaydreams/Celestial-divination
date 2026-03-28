@@ -1,43 +1,38 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
-  Menu, 
-  Languages, 
   Sparkles, 
   History as HistoryIcon, 
   User, 
   Star, 
   ChevronRight, 
-  ChevronDown, 
   Bookmark, 
   Share2, 
-  LogOut,
-  BookOpen,
-  Heart,
-  ShieldCheck,
-  Wallet
+  LogOut, 
+  BookOpen, 
+  Heart, 
+  ShieldCheck, 
+  Wallet,
+  Menu,
+  Languages,
+  ChevronDown
 } from "lucide-react";
-import { cn } from "@/src/lib/utils";
+import { cn } from "./lib/utils";
 
 // --- Types ---
 
-type LuckLevel = "Supreme" | "Very Lucky" | "Neutral" | "Unlucky";
+type LuckLevel = "Supreme" | "Very Lucky" | "Lucky" | "Neutral" | "Unlucky";
 
 interface Fortune {
   id: string;
-  date: string;
-  title: string;
   signNumber: string;
   luck: LuckLevel;
-  poem: [string, string];
+  title: string;
+  poem: string[];
   insight: string;
   interpretation: string;
   advice: string;
+  date: string;
   categories: {
     career: string;
     romance: string;
@@ -46,80 +41,327 @@ interface Fortune {
   };
 }
 
-type View = "divination" | "history" | "profile" | "result";
+type View = "divination" | "result" | "history" | "profile";
 
-// --- Mock Data: Traditional Sign Library ---
-// In a full app, this would contain 100 signs. Here are representative samples across different luck levels.
+// --- Data ---
+
 const SIGN_LIBRARY: Record<number, Omit<Fortune, "id" | "date">> = {
   1: {
-    title: "飞龙在天",
     signNumber: "第一签",
     luck: "Supreme",
-    poem: ["巍巍独步向云间", "玉殿千官第一班"],
-    insight: "首领之象，万事大吉",
-    interpretation: "此乃乾卦之象。正如巨龙腾空，位列仙班。代表您正处于运势的巅峰，多年努力终获最高认可。",
-    advice: "此时应保持正气，提携后进。虽处高位，不可骄傲，方能长久。",
+    title: "钟离成道",
+    poem: ["天开地辟结良缘", "日吉时良万事全", "若得此签非小可", "投机得中自安然"],
+    insight: "开天辟地，万事胜意",
+    interpretation: "此卦阴阳交泰之象，凡事大吉利也。",
+    advice: "时机成熟，果断出击，必有重酬。",
     categories: {
-      career: "官运亨通，创业者将获巨大成功。",
-      romance: "天作之合，良缘缔结。",
-      health: "神清气爽，百病不侵。",
-      wealth: "财源广进，正财偏财皆旺。",
+      career: "官运亨通，步步高升。",
+      romance: "天作之合，百年好合。",
+      health: "身体康健，百病不侵。",
+      wealth: "财源广进，富贵双全。"
     }
   },
-  28: {
-    title: "韩信弃楚归汉",
-    signNumber: "第二十八签",
-    luck: "Neutral",
-    poem: ["劝君莫惜金缕衣", "劝君惜取少年时"],
-    insight: "把握时机，果断抉择",
-    interpretation: "韩信初仕项羽而不得志，毅然弃楚归汉，终获重用。此签代表目前的处境虽未必险峻，但缺乏发展空间。",
-    advice: "莫要沉溺于现状的安逸，应当在合适的时机做出改变，寻找更广阔的舞台。",
-    categories: {
-      career: "宜动不宜静，勇于突破现状。",
-      romance: "切莫犹豫，真诚表露心迹。",
-      health: "需防过劳，调理脾胃为先。",
-      wealth: "正财平稳，偏财不宜强求。",
-    }
-  },
-  45: {
-    title: "仁杰遇主",
-    signNumber: "第四十五签",
+  2: {
+    signNumber: "第二签",
     luck: "Very Lucky",
-    poem: ["天地变通万物新", "自能遇主遇知音"],
-    insight: "贵人相助，枯木逢春",
-    interpretation: "狄仁杰才华横溢终遇明主。代表您即将遇到能赏识您的贵人，之前的困顿将一扫而空。",
-    advice: "广结善缘，多参加社交活动。机会往往通过他人的引荐到来。",
+    title: "苏秦不第",
+    poem: ["鲸牙锐利出深潭", "变化飞腾在此间", "顺水行舟无阻滞", "任君所向自安闲"],
+    insight: "潜龙出渊，顺风顺水",
+    interpretation: "此卦顺水行舟之象，凡事和合大吉也。",
+    advice: "虽有小挫，但大势已成，顺势而为即可。",
     categories: {
-      career: "有贵人提拔，升迁在即。",
-      romance: "经人介绍可获良缘。",
-      health: "身体康复，精神焕发。",
-      wealth: "有意外之财，多由他人带来。",
+      career: "初有阻碍，后必成功。",
+      romance: "良缘夙缔，终成眷属。",
+      health: "平安无事，注意调养。",
+      wealth: "求财有道，晚年丰厚。"
     }
   },
-  82: {
-    title: "苏秦不第",
-    signNumber: "第八十二签",
-    luck: "Unlucky",
-    poem: ["一箭开弓往上发", "虚劳心力事难成"],
-    insight: "时机未到，暂且隐忍",
-    interpretation: "苏秦初次游说失败，受尽冷遇。代表目前您的计划可能受阻，环境对您不利。",
-    advice: "此时不宜强求，应闭门苦读，积蓄力量。等待时机成熟再图大计。",
+  3: {
+    signNumber: "第三签",
+    luck: "Supreme",
+    title: "董永遇仙",
+    poem: ["鸾凤呈祥瑞气新", "天教好事近红尘", "若能守旧无他意", "自有高人来指引"],
+    insight: "天赐良缘，贵人指路",
+    interpretation: "此卦鸾凤呈祥之象，凡事大吉利也。",
+    advice: "守正待时，贵人自现，不可急躁。",
     categories: {
-      career: "阻力重重，建议暂守旧业。",
-      romance: "多有口舌，建议冷静处理。",
-      health: "心火过旺，注意睡眠。",
-      wealth: "有破财之虞，切忌投资。",
+      career: "贵人扶持，前程似锦。",
+      romance: "天赐良缘，美满幸福。",
+      health: "福星高照，早日康复。",
+      wealth: "财运亨通，意外之财。"
     }
-  }
+  },
+  4: {
+    signNumber: "第四签",
+    luck: "Supreme",
+    title: "长乐老",
+    poem: ["千年古镜复重圆", "女貌郎才两周全", "官禄荣华皆显达", "婚姻和合自团圆"],
+    insight: "破镜重圆，官禄荣华",
+    interpretation: "此卦破镜重圆之象，凡事成就大吉也。",
+    advice: "旧事重提，必有转机，坚持到底。",
+    categories: {
+      career: "功成名就，名利双收。",
+      romance: "破镜重圆，恩爱如初。",
+      health: "老当益壮，延年益寿。",
+      wealth: "财运极佳，富甲一方。"
+    }
+  },
+  5: {
+    signNumber: "第五签",
+    luck: "Neutral",
+    title: "刘晨遇仙",
+    poem: ["一山如画对清溪", "采药归来路不迷", "若问前程何处好", "且看云外月高低"],
+    insight: "画中寻路，顺其自然",
+    interpretation: "此卦采药归来之象，凡事平常大吉也。",
+    advice: "凡事不可强求，顺应天命，自有归处。",
+    categories: {
+      career: "平稳发展，不宜急进。",
+      romance: "随缘而遇，不可强求。",
+      health: "注意饮食，多加锻炼。",
+      wealth: "财运平平，知足常乐。"
+    }
+  },
+  6: {
+    signNumber: "第六签",
+    luck: "Neutral",
+    title: "仁贵回家",
+    poem: ["投身岩下铜墙铁", "纵有神仙也难说", "若问前程何处好", "且看云外月高低"],
+    insight: "身陷困境，静待时机",
+    interpretation: "此卦铜墙铁壁之象，凡事守旧则吉也。",
+    advice: "目前处境艰难，宜守不宜进，等待转机。",
+    categories: {
+      career: "阻碍重重，宜守旧职。",
+      romance: "波折较多，需多沟通。",
+      health: "旧疾复发，需细心调养。",
+      wealth: "财运不佳，谨防破财。"
+    }
+  },
+  7: {
+    signNumber: "第七签",
+    luck: "Very Lucky",
+    title: "廉颇负荆",
+    poem: ["奔波劳碌为何求", "且向深山去隐居", "若得此签非小可", "投机得中自安然"],
+    insight: "知错能改，善莫大焉",
+    interpretation: "此卦知错能改之象，凡事和合大吉也。",
+    advice: "放下身段，诚恳待人，必能化干戈为玉帛。",
+    categories: {
+      career: "先苦后甜，贵人相助。",
+      romance: "重归于好，感情升温。",
+      health: "心宽体胖，注意休息。",
+      wealth: "求财得利，生意兴隆。"
+    }
+  },
+  8: {
+    signNumber: "第八签",
+    luck: "Supreme",
+    title: "裴度还带",
+    poem: ["茂林修竹好清风", "一箭中鹄万事通", "若得此签非小可", "投机得中自安然"],
+    insight: "积德行善，必有后福",
+    interpretation: "此卦积德行善之象，凡事大吉利也。",
+    advice: "多行善事，莫问前程，福报自至。",
+    categories: {
+      career: "名声大噪，前途无量。",
+      romance: "天赐良缘，幸福美满。",
+      health: "身体康健，神清气爽。",
+      wealth: "财源滚滚，富贵荣华。"
+    }
+  },
+  9: {
+    signNumber: "第九签",
+    luck: "Supreme",
+    title: "赵韩王半部论语",
+    poem: ["鸾凤呈祥瑞气新", "天教好事近红尘", "若能守旧无他意", "自有高人来指引"],
+    insight: "半部论语，治世安邦",
+    interpretation: "此卦鸾凤呈祥之象，凡事大吉利也。",
+    advice: "精益求精，必有所成，不可半途而废。",
+    categories: {
+      career: "学有所成，官运亨通。",
+      romance: "志同道合，恩爱有加。",
+      health: "精力充沛，身体强健。",
+      wealth: "财运亨通，名利双收。"
+    }
+  },
+  10: {
+    signNumber: "第十签",
+    luck: "Neutral",
+    title: "庞涓观阵",
+    poem: ["椟藏金玉待时机", "未遇高人且自随", "若得此签非小可", "投机得中自安然"],
+    insight: "怀才不遇，静待时机",
+    interpretation: "此卦怀才不遇之象，凡事守旧则吉也。",
+    advice: "才华虽高，时运未到，宜韬光养晦。",
+    categories: {
+      career: "怀才不遇，宜多学习。",
+      romance: "缘分未到，耐心等待。",
+      health: "注意心态，平和处世。",
+      wealth: "财运平平，不宜投资。"
+    }
+  },
+  11: {
+    signNumber: "第十一签",
+    luck: "Supreme",
+    title: "刘先主入西川",
+    poem: ["欲求胜事可非常", "争奈亲姻日暂忙", "到头竟必成大器", "且看云外月高低"],
+    insight: "先苦后甜，必成大器",
+    interpretation: "此卦先难后易之象，凡事大吉利也。",
+    advice: "虽有波折，但终能成就大业，需有恒心。",
+    categories: {
+      career: "大器晚成，前程似锦。",
+      romance: "好事多磨，终成眷属。",
+      health: "转危为安，注意调养。",
+      wealth: "财运亨通，晚年丰厚。"
+    }
+  },
+  12: {
+    signNumber: "第十二签",
+    luck: "Supreme",
+    title: "武吉遇师",
+    poem: ["否极泰来理自然", "谁知好事在今天", "若得此签非小可", "投机得中自安然"],
+    insight: "否极泰来，好事临门",
+    interpretation: "此卦否极泰来之象，凡事大吉利也。",
+    advice: "困境已过，好运将至，把握当下。",
+    categories: {
+      career: "步步高升，贵人相助。",
+      romance: "天赐良缘，美满幸福。",
+      health: "身体康健，早日康复。",
+      wealth: "财源广进，富贵双全。"
+    }
+  },
+  13: {
+    signNumber: "第十三签",
+    luck: "Supreme",
+    title: "罗通扫北",
+    poem: ["自小生身富贵家", "眼前万事总奢华", "蒙君赐我金腰带", "四海声名遍天下"],
+    insight: "少年得志，名扬四海",
+    interpretation: "此卦少年得志之象，凡事成就大吉也。",
+    advice: "不可骄傲自满，需谦虚谨慎，方能长久。",
+    categories: {
+      career: "名利双收，前途无量。",
+      romance: "门当户对，恩爱有加。",
+      health: "精力充沛，身体强健。",
+      wealth: "财运极佳，富贵荣华。"
+    }
+  },
+  14: {
+    signNumber: "第十四签",
+    luck: "Supreme",
+    title: "郭嘉遗计定辽东",
+    poem: ["宛如仙鹤出樊笼", "脱却凡胎路不同", "若得此签非小可", "投机得中自安然"],
+    insight: "脱离困境，前程似锦",
+    interpretation: "此卦脱离樊笼之象，凡事大吉利也。",
+    advice: "摆脱束缚，大展宏图，必有所成。",
+    categories: {
+      career: "官运亨通，步步高升。",
+      romance: "天作之合，百年好合。",
+      health: "身体康健，百病不侵。",
+      wealth: "财源广进，富贵双全。"
+    }
+  },
+  15: {
+    signNumber: "第十五签",
+    luck: "Supreme",
+    title: "苏秦得志",
+    poem: ["一箭中鹄万事通", "茂林修竹好清风", "若得此签非小可", "投机得中自安然"],
+    insight: "一箭中鹄，万事亨通",
+    interpretation: "此卦一箭中鹄之象，凡事大吉利也。",
+    advice: "目标明确，果断出击，必能成功。",
+    categories: {
+      career: "功成名就，名利双收。",
+      romance: "良缘夙缔，终成眷属。",
+      health: "平安无事，注意调养。",
+      wealth: "求财有道，晚年丰厚。"
+    }
+  },
+  16: {
+    signNumber: "第十六签",
+    luck: "Supreme",
+    title: "陆逊入石头城",
+    poem: ["心如古镜复重圆", "女貌郎才两周全", "官禄荣华皆显达", "婚姻和合自团圆"],
+    insight: "破镜重圆，官禄荣华",
+    interpretation: "此卦破镜重圆之象，凡事成就大吉也。",
+    advice: "旧事重提，必有转机，坚持到底。",
+    categories: {
+      career: "功成名就，名利双收。",
+      romance: "破镜重圆，恩爱如初。",
+      health: "老当益壮，延年益寿。",
+      wealth: "财运极佳，富甲一方。"
+    }
+  },
+  17: {
+    signNumber: "第十七签",
+    luck: "Supreme",
+    title: "曹操平定中原",
+    poem: ["鸾凤呈祥瑞气新", "天教好事近红尘", "若能守旧无他意", "自有高人来指引"],
+    insight: "平定中原，大局已定",
+    interpretation: "此卦鸾凤呈祥之象，凡事大吉利也。",
+    advice: "守正待时，贵人自现，不可急躁。",
+    categories: {
+      career: "贵人扶持，前程似锦。",
+      romance: "天赐良缘，美满幸福。",
+      health: "福星高照，早日康复。",
+      wealth: "财运亨通，意外之财。"
+    }
+  },
+  18: {
+    signNumber: "第十八签",
+    luck: "Supreme",
+    title: "鬼谷子授徒",
+    poem: ["欲求胜事可非常", "争奈亲姻日暂忙", "到头竟必成大器", "且看云外月高低"],
+    insight: "名师指点，必成大器",
+    interpretation: "此卦先难后易之象，凡事大吉利也。",
+    advice: "虚心求教，必有所获，前途无量。",
+    categories: {
+      career: "学有所成，官运亨通。",
+      romance: "志同道合，恩爱有加。",
+      health: "精力充沛，身体强健。",
+      wealth: "财运亨通，名利双收。"
+    }
+  },
+  19: {
+    signNumber: "第十九签",
+    luck: "Supreme",
+    title: "张良遇黄石公",
+    poem: ["一山如画对清溪", "采药归来路不迷", "若问前程何处好", "且看云外月高低"],
+    insight: "奇遇贵人，授书传经",
+    interpretation: "此卦采药归来之象，凡事平常大吉也。",
+    advice: "凡事不可强求，顺应天命，自有归处。",
+    categories: {
+      career: "平稳发展，不宜急进。",
+      romance: "随缘而遇，不可强求。",
+      health: "注意饮食，多加锻炼。",
+      wealth: "财运平平，知足常乐。"
+    }
+  },
+  20: {
+    signNumber: "第二十签",
+    luck: "Supreme",
+    title: "姜太公遇文王",
+    poem: ["椟藏金玉待时机", "未遇高人且自随", "若得此签非小可", "投机得中自安然"],
+    insight: "姜太公钓鱼，愿者上钩",
+    interpretation: "此卦怀才不遇之象，凡事守旧则吉也。",
+    advice: "才华虽高，时运未到，宜韬光养晦。",
+    categories: {
+      career: "怀才不遇，宜多学习。",
+      romance: "缘分未到，耐心等待。",
+      health: "注意心态，平和处世。",
+      wealth: "财运平平，不宜投资。"
+    }
+  },
+  // ... Fill the rest with placeholders to ensure 100 signs exist
 };
 
-// Fill the rest with placeholders to ensure 1-100 coverage for the random logic
-for (let i = 1; i <= 100; i++) {
+// Placeholder generation for missing signs
+for (let i = 21; i <= 100; i++) {
   if (!SIGN_LIBRARY[i]) {
+    const baseSign = SIGN_LIBRARY[(i % 10) + 1] || SIGN_LIBRARY[1];
+    const lucks: LuckLevel[] = ["Supreme", "Very Lucky", "Lucky", "Neutral", "Unlucky"];
     SIGN_LIBRARY[i] = {
-      ...SIGN_LIBRARY[28], // Default to a neutral sign for placeholder
+      ...baseSign,
       signNumber: `第${i}签`,
-      title: `古人故事 ${i}`
+      luck: lucks[Math.floor(Math.random() * lucks.length)],
+      title: `观音灵签 第${i}签`,
+      insight: "天道酬勤，顺其自然",
+      interpretation: "此卦顺应天命之象，凡事吉凶参半也。",
+      advice: "保持平常心，多行善事，自有好运。",
     };
   }
 }
@@ -129,17 +371,15 @@ for (let i = 1; i <= 100; i++) {
 const Layout = ({ children, currentView, setView }: { children: React.ReactNode, currentView: View, setView: (v: View) => void }) => {
   return (
     <div className="relative min-h-screen overflow-x-hidden">
-      {/* Rice Paper Texture Overlay */}
       <div className="fixed inset-0 rice-paper-overlay z-10 pointer-events-none" />
       
-      {/* Top Navigation Bar */}
       <nav className="fixed top-0 w-full z-50 bg-surface/70 backdrop-blur-xl border-b border-outline-variant/15 shadow-sm">
         <div className="flex items-center justify-between px-6 h-16 max-w-4xl mx-auto">
           <button className="text-primary active:scale-95 transition-transform">
             <Menu className="w-6 h-6" />
           </button>
           <h1 className="text-2xl font-headline italic tracking-wide text-primary font-bold">
-            Celestial Divination
+            观音灵签
           </h1>
           <div className="flex items-center gap-3">
             <Languages className="w-5 h-5 text-primary cursor-pointer" />
@@ -155,12 +395,10 @@ const Layout = ({ children, currentView, setView }: { children: React.ReactNode,
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="relative z-20 pt-20 pb-28 min-h-screen max-w-4xl mx-auto px-6">
         {children}
       </main>
 
-      {/* Bottom Navigation Bar */}
       <footer className="fixed bottom-0 left-0 w-full z-50 bg-surface/90 backdrop-blur-2xl border-t border-outline-variant/15 shadow-lg rounded-t-xl">
         <div className="flex justify-around items-center px-4 py-3">
           <button 
@@ -171,7 +409,7 @@ const Layout = ({ children, currentView, setView }: { children: React.ReactNode,
             )}
           >
             <Sparkles className="w-6 h-6" />
-            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">Divination</span>
+            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">求签</span>
           </button>
           <button 
             onClick={() => setView("history")}
@@ -181,7 +419,7 @@ const Layout = ({ children, currentView, setView }: { children: React.ReactNode,
             )}
           >
             <HistoryIcon className="w-6 h-6" />
-            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">History</span>
+            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">历史</span>
           </button>
           <button 
             onClick={() => setView("profile")}
@@ -191,7 +429,7 @@ const Layout = ({ children, currentView, setView }: { children: React.ReactNode,
             )}
           >
             <User className="w-6 h-6" />
-            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">Profile</span>
+            <span className="text-[10px] uppercase tracking-widest mt-1 font-bold">我的</span>
           </button>
         </div>
       </footer>
@@ -230,14 +468,11 @@ const DivinationScreen = ({ onComplete }: { onComplete: () => void }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh]">
-      {/* Background Decor */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-40 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ink-wash-gradient" />
       </div>
 
-      {/* Central Fortune Tube */}
       <div className="relative w-full max-w-md aspect-square flex items-center justify-center">
-        {/* Golden Line Art Decor */}
         <div className="absolute inset-0 pointer-events-none opacity-20 flex items-center justify-center">
           <svg className="text-secondary scale-125" viewBox="0 0 400 400" width="400" height="400">
             <path d="M200 20V380M20 200H380M80 80L320 320M320 80L80 320" stroke="currentColor" strokeDasharray="4 4" strokeWidth="0.5" />
@@ -246,7 +481,6 @@ const DivinationScreen = ({ onComplete }: { onComplete: () => void }) => {
           </svg>
         </div>
 
-        {/* The Tube */}
         <motion.div 
           animate={isShaking ? {
             rotate: [0, -5, 5, -5, 5, 0],
@@ -258,7 +492,6 @@ const DivinationScreen = ({ onComplete }: { onComplete: () => void }) => {
           onClick={handleStart}
         >
           <div className="relative w-48 h-72">
-            {/* Rising Stick */}
             <motion.div 
               animate={isShaking ? { y: [-10, -40, -10] } : { y: 0 }}
               transition={{ repeat: Infinity, duration: 1 }}
@@ -269,14 +502,13 @@ const DivinationScreen = ({ onComplete }: { onComplete: () => void }) => {
               </div>
             </motion.div>
 
-            {/* Tube Body */}
             <div className="relative w-full h-full bg-primary-container rounded-lg shadow-2xl overflow-hidden border-2 border-primary/20">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-black/20" />
               <div className="absolute top-0 w-full h-4 bg-secondary/80" />
               <div className="absolute bottom-0 w-full h-8 bg-secondary/80" />
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className="writing-vertical text-[#FFD700] font-calligraphy text-5xl tracking-[0.5rem] drop-shadow-lg">
-                  乾坤
+                  观音
                 </span>
               </div>
             </div>
@@ -284,14 +516,13 @@ const DivinationScreen = ({ onComplete }: { onComplete: () => void }) => {
         </motion.div>
       </div>
 
-      {/* Progress & Text */}
       <div className="mt-12 w-full max-w-sm flex flex-col items-center gap-6 z-40">
         <div className="flex flex-col items-center gap-2 text-center">
           <p className="text-secondary font-bold text-sm uppercase tracking-[0.2rem]">
             {isShaking ? "诚心摇签中..." : "点击签筒开始"}
           </p>
           <h2 className="text-on-surface font-headline italic text-2xl">
-            {isShaking ? "Communicating with the Heavens..." : "Seek Your Destiny"}
+            {isShaking ? "正在与上苍沟通..." : "寻求你的命运"}
           </h2>
         </div>
 
@@ -329,13 +560,17 @@ const FortuneResultScreen = ({ fortune, onBack, onSave }: { fortune: Fortune, on
       <div className="p-8 space-y-10">
         <header className="text-center space-y-4">
           <div className="space-y-2">
-            <p className="text-primary font-bold tracking-[0.2em] uppercase text-sm">Celestial Scroll</p>
+            <p className="text-primary font-bold tracking-[0.2em] uppercase text-sm">天书灵卷</p>
             <h2 className="text-4xl font-black text-on-surface tracking-widest font-calligraphy">{fortune.signNumber}</h2>
           </div>
           
           <div className="inline-flex items-center gap-3 px-6 py-1.5 rounded-full bg-secondary-fixed-dim/20 text-secondary border border-secondary-fixed-dim/30">
             <Star className="w-4 h-4 fill-current" />
-            <span className="font-bold tracking-widest text-lg">{fortune.luck === "Supreme" ? "上上签" : fortune.luck === "Neutral" ? "中平签" : "吉签"}</span>
+            <span className="font-bold tracking-widest text-lg">
+              {fortune.luck === "Supreme" ? "上上签" : 
+               fortune.luck === "Very Lucky" ? "大吉签" : 
+               fortune.luck === "Neutral" ? "中平签" : "下下签"}
+            </span>
             <Star className="w-4 h-4 fill-current" />
           </div>
         </header>
@@ -350,13 +585,12 @@ const FortuneResultScreen = ({ fortune, onBack, onSave }: { fortune: Fortune, on
           <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
             <BookOpen className="w-64 h-64" />
           </div>
-          <div className="flex gap-10 md:gap-16">
-            <div className="writing-vertical text-3xl md:text-4xl tracking-[0.4em] leading-loose text-on-surface border-r border-outline-variant/20 pr-10 font-calligraphy">
-              {fortune.poem[0]}
-            </div>
-            <div className="writing-vertical text-3xl md:text-4xl tracking-[0.4em] leading-loose text-on-surface font-calligraphy">
-              {fortune.poem[1]}
-            </div>
+          <div className="flex flex-row-reverse gap-10 md:gap-16 items-center">
+            {fortune.poem.map((line, idx) => (
+              <div key={idx} className="writing-vertical text-2xl md:text-3xl tracking-[0.4em] leading-loose text-on-surface font-calligraphy">
+                {line}
+              </div>
+            ))}
           </div>
         </section>
 
@@ -434,7 +668,7 @@ const HistoryScreen = ({ fortunes, onSelect }: { fortunes: Fortune[], onSelect: 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
-        <h3 className="font-headline text-xl italic text-on-surface-variant">Past Fortunes</h3>
+        <h3 className="font-headline text-xl italic text-on-surface-variant">历史签文</h3>
         <span className="text-[10px] uppercase tracking-widest text-outline">Scroll of History</span>
       </div>
 
@@ -458,9 +692,14 @@ const HistoryScreen = ({ fortunes, onSelect }: { fortunes: Fortune[], onSelect: 
                   <div className="text-right flex flex-col items-end">
                     <div className={cn(
                       "px-3 py-1 border rounded font-bold text-xs mb-1",
-                      fortune.luck === "Supreme" ? "bg-secondary/10 border-secondary/20 text-secondary" : "bg-surface-container-highest/50 border-outline-variant/30 text-on-surface-variant"
+                      fortune.luck === "Supreme" ? "bg-secondary/10 border-secondary/20 text-secondary" : 
+                      fortune.luck === "Very Lucky" ? "bg-primary/10 border-primary/20 text-primary" :
+                      fortune.luck === "Unlucky" ? "bg-destructive/10 border-destructive/20 text-destructive" :
+                      "bg-surface-container-highest/50 border-outline-variant/30 text-on-surface-variant"
                     )}>
-                      {fortune.luck === "Supreme" ? "上上" : fortune.luck === "Neutral" ? "中平" : "吉"} ({fortune.luck})
+                      {fortune.luck === "Supreme" ? "上上" : 
+                       fortune.luck === "Very Lucky" ? "大吉" :
+                       fortune.luck === "Unlucky" ? "下下" : "中平"}
                     </div>
                     <ChevronRight className="w-5 h-5 text-outline opacity-30 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -470,13 +709,13 @@ const HistoryScreen = ({ fortunes, onSelect }: { fortunes: Fortune[], onSelect: 
           </ul>
         ) : (
           <div className="px-6 py-12 text-center text-outline italic">
-            No fortunes saved yet. Seek your destiny to begin.
+            暂无收藏。快去求一签吧。
           </div>
         )}
       </div>
 
       <button className="w-full py-4 border border-dashed border-outline/30 rounded-lg text-outline text-xs tracking-widest uppercase hover:bg-surface-container transition-colors">
-        Unroll Full Archive
+        展开完整档案
       </button>
     </div>
   );
@@ -497,21 +736,21 @@ const ProfileScreen = () => {
           </div>
         </div>
         <div className="space-y-1">
-          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface">Master Lin Wei</h2>
+          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface">林大师</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-secondary font-bold">Seeker of Eternal Wisdom</p>
         </div>
       </section>
 
       <section className="space-y-8 pt-6">
         <div className="flex justify-between items-end border-b border-outline-variant/30 pb-2">
-          <h3 className="font-headline text-xl italic text-on-surface-variant">System Settings</h3>
+          <h3 className="font-headline text-xl italic text-on-surface-variant">系统设置</h3>
           <span className="text-[10px] uppercase tracking-widest text-outline">Configuration</span>
         </div>
 
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-base text-on-surface">Language Preference</p>
+              <p className="text-base text-on-surface">语言偏好</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Traditional / Simplified</p>
             </div>
             <div className="flex bg-surface-container-high rounded-lg p-1">
@@ -522,7 +761,7 @@ const ProfileScreen = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-base text-on-surface">Daily Morning Oracle</p>
+              <p className="text-base text-on-surface">每日早课</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Receive guidance at dawn</p>
             </div>
             <div className="w-11 h-6 bg-primary rounded-full relative cursor-pointer">
@@ -532,7 +771,7 @@ const ProfileScreen = () => {
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-base text-on-surface">Export Wisdom</p>
+              <p className="text-base text-on-surface">导出智慧</p>
               <p className="text-[10px] text-outline uppercase tracking-wider">Format for historical archive</p>
             </div>
             <div className="flex items-center gap-1 text-sm font-bold text-on-surface-variant cursor-pointer">
@@ -545,7 +784,7 @@ const ProfileScreen = () => {
       <section className="pt-8 flex justify-center">
         <button className="flex items-center gap-3 px-8 py-3 bg-primary text-surface rounded-lg shadow-lg active:scale-95 transition-all">
           <LogOut className="w-5 h-5" />
-          <span className="text-sm uppercase tracking-widest font-bold">Conclude Session</span>
+          <span className="text-sm uppercase tracking-widest font-bold">结束会话</span>
         </button>
       </section>
     </div>
@@ -557,16 +796,12 @@ const ProfileScreen = () => {
 export default function App() {
   const [view, setView] = useState<View>("divination");
   const [selectedFortune, setSelectedFortune] = useState<Fortune | null>(null);
-  const [savedFortunes, setSavedFortunes] = useState<Fortune[]>([]); // Start with an empty collection
+  const [savedFortunes, setSavedFortunes] = useState<Fortune[]>([]);
 
   const handleDivinationComplete = () => {
-    // 1. Draw a random number between 1 and 100 (Equal probability)
     const drawnNumber = Math.floor(Math.random() * 100) + 1;
-    
-    // 2. Look up the sign in the library
     const signData = SIGN_LIBRARY[drawnNumber];
     
-    // 3. Create the fortune object
     const newFortune: Fortune = { 
       ...signData, 
       id: Date.now().toString(), 
@@ -580,7 +815,8 @@ export default function App() {
   const handleSaveFortune = (fortune: Fortune) => {
     if (!savedFortunes.find(f => f.id === fortune.id)) {
       setSavedFortunes(prev => [fortune, ...prev]);
-      alert("签文已收藏至您的卷轴中。");
+      // Simple UI feedback instead of alert if possible, but alert is fine for now
+      alert("签文已收藏。您可以在“历史”页面查看。");
     } else {
       alert("此签已在您的收藏中。");
     }
