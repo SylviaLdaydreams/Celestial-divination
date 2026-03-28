@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Serif:wght@400;700&family=Ma+Shan+Zheng&display=swap');
+
+@theme {
+  --font-headline: "Newsreader", serif;
+  --font-body: "Noto Serif", serif;
+  --font-calligraphy: "Ma Shan Zheng", cursive;
+
+  --color-primary: #98000a;
+  --color-primary-container: #bc211e;
+  --color-secondary: #735c00;
+  --color-secondary-fixed: #ffe088;
+  --color-secondary-fixed-dim: #e9c349;
+  --color-surface: #fdfae7;
+  --color-surface-dim: #dddbc8;
+  --color-surface-bright: #fdfae7;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f4e1;
+  --color-surface-container: #f1eedb;
+  --color-surface-container-high: #ece9d6;
+  --color-surface-container-highest: #e6e3d0;
+  --color-on-surface: #1c1c11;
+  --color-on-surface-variant: #5b403d;
+  --color-outline: #8f706c;
+  --color-outline-variant: #e4beb9;
+
+  --radius-default: 0.5rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body selection:bg-secondary-fixed;
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  .rice-paper-overlay {
+    background-image: url("https://www.transparenttextures.com/patterns/handmade-paper.png");
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  .ink-wash-gradient {
+    background: radial-gradient(circle at center, rgba(28, 28, 17, 0.03) 0%, rgba(253, 250, 231, 0) 70%);
+  }
+
+  .writing-vertical {
+    writing-mode: vertical-rl;
+  }
+
+  .ink-wash-mask {
+    mask-image: radial-gradient(circle, black 50%, transparent 100%);
+  }
+}
